@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>URL Shortener</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3"></script>
+    <link href="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.css" rel="stylesheet"/>
+    <link href="https://fonts.cdnfonts.com/css/google-sans" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Product Sans', sans-serif !important;
+        }
+
+        /* Initially hide the app UI */
+        #app {
+            visibility: hidden;
+        }
+
+        /* When the app is mounted, show the UI */
+        .app-visible #app {
+            visibility: visible;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+<section>
+    <div class="py-8 px-4 mx-auto max-w-screen-xl text-center lg:py-14 z-10 relative">
+	<img src="./img/girl5.png" class="h-24 m-auto">
+        <h1 class="mb-4 text-4xl font-extrabold tracking-tight leading-none text-gray-900 md:text-5xl lg:text-6xl dark:text-white">Emilie URL Shortener</h1>
+        <p class="mb-8 text-md font-normal text-gray-500 lg:text-lg sm:px-16 lg:px-48 dark:text-gray-200">Generate shortened links and QR codes, and easily share them across various platforms. Monitor performance to identify what works and what doesn't, all through the Emilie URL Shortener Platform.</p>
+        
+        <!-- URL input and button -->
+        <form @submit.prevent="shortenURL" class="w-full max-w-lg mx-auto">   
+            <div class="relative">
+                <input type="url" v-model="url" class="block w-full p-4 text-sm text-gray-900 border border-gray-300 rounded-lg bg-white focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:border-gray-700 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Enter a URL to shorten..." required />
+                <button type="submit" class="text-white absolute end-2.5 bottom-2.5 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Shorten URL</button>
+            </div>
+        </form>
+
+        <hr class=" h-1 max-w-6xl mx-auto my-4 bg-gray-100 border-0 rounded md:my-10 dark:bg-gray-700">
+        
+        <!-- Shortened URL Display -->
+        <p class="text-lg font-medium text-gray-900 dark:text-white mb-4 self-center">All Your shortened URL: <span class="ms-6">
+		<button type="button" data-modal-target="static-modal" data-modal-toggle="static-modal" class="text-gray-900 bg-gray-100 hover:bg-gray-200 focus:ring-4 focus:outline-none focus:ring-gray-100 font-medium rounded-full text-xs px-5 py-2 border border-gray-300 text-center inline-flex items-center dark:focus:ring-gray-500 me-2">Check History</button>
+		</span></p> 
+		<!-- Modal toggle -->
+
+        <div v-if="shortenedURL">
+            <div class="w-full max-w-xl m-auto">
+                <div class="relative">
+                    <label for="npm-install-copy-button" class="sr-only">Label</label>
+                    <input id="npm-install-copy-button" type="text" class="col-span-6 bg-gray-50 border border-gray-300 text-gray-500 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500" v-model="shortenedURL" ref="copyInput" disabled readonly>
+                    
+                    <!-- Copy Button -->
+                    <button @click="copyToClipboard" class="absolute end-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg p-2 inline-flex items-center justify-center">
+                        <span v-if="!copied" id="default-icon">
+                            <svg class="w-3.5 h-3.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 18 20">
+                                <path d="M16 1h-3.278A1.992 1.992 0 0 0 11 0H7a1.993 1.993 0 0 0-1.722 1H2a2 2 0 0 0-2 2v15a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2Zm-3 14H5a1 1 0 0 1 0-2h8a1 1 0 0 1 0 2Zm0-4H5a1 1 0 0 1 0-2h8a1 1 0 1 1 0 2Zm0-5H5a1 1 0 0 1 0-2h2V2h4v2h2a1 1 0 1 1 0 2Z"/>
+                            </svg>
+                        </span>
+                        <span v-else id="success-icon" class="inline-flex items-center">
+                            <svg class="w-3.5 h-3.5 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 12">
+                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 5.917 5.724 10.5 15 1.5"/>
+                            </svg>
+                        </span>
+                    </button>
+                    <div v-if="copied" class="absolute z-10 text-sm text-green-600 transition-opacity duration-300">
+                        Copied!
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error message -->
+<div v-if="error" id="alert-2" class="m-auto max-w-xl mt-6 text-red-600">
+ 
+	<div class="flex items-center p-4 mb-4 text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400" role="alert">
+		  <svg class="flex-shrink-0 w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+			<path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
+		  </svg>
+  <span class="sr-only">Info</span>
+		  <div class="ms-3 text-sm font-medium">
+			{{ error }}
+		  </div>
+  <button type="button" @click="hideError" class="ms-auto -mx-1.5 -my-1.5 bg-red-50 text-red-500 rounded-lg focus:ring-2 focus:ring-red-400 p-1.5 hover:bg-red-200 inline-flex items-center justify-center h-8 w-8 dark:bg-gray-800 dark:text-red-400 dark:hover:bg-gray-700" data-dismiss-target="#alert-2" aria-label="Close">
+    <span class="sr-only">Close</span>
+    <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+      <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+    </svg>
+  </button>
+</div>
+	
+	
+</div>
+
+    </div>
+</section>
+<!-- Main modal -->
+	<div id="static-modal" data-modal-backdrop="static" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+		<div class="relative p-4 w-full max-w-2xl max-h-full">
+			<!-- Modal content -->
+			<div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
+				<!-- Modal header -->
+				<div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600">
+					<h3 class="text-xl font-semibold text-gray-900 dark:text-white">
+					   Shortened URLs History:
+					</h3>
+					<button type="button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white" data-modal-hide="static-modal">
+						<svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+							<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+						</svg>
+						<span class="sr-only">Close modal</span>
+					</button>
+				</div>
+			<!-- Modal body -->
+			   <div class="p-4">
+					<div class="relative overflow-x-auto">
+						<table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+							<thead class="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400">
+								<tr>
+									<th scope="col" class="px-4 py-3">
+										S.No
+									</th>
+									<th scope="col" class="px-6 py-3">
+									   Links
+									</th>
+									<th scope="col" class="px-6 py-3">
+									   Delete
+									</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr v-for="(url, index) in [...shortenedURLs].reverse()" :key="url" class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+									<th scope="row" class="px-4 py-4 font-medium text-gray-600 whitespace-nowrap dark:text-white">
+									   {{ shortenedURLs.length - index }}
+									</th>
+									<td class="px-6 py-4">
+									   {{ url }}
+									</td>
+									<td class="px-6 py-4">
+									  <button type="button" @click="Url_delete(url)" class="bg-red-200 text-red-800 text-xs font-medium me-2 px-2.5 py-1 rounded-full dark:bg-red-900 dark:text-red-300">
+										<svg class="w-[18px] h-[18px] text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+										  <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" d="M5 7h14m-9 3v8m4-8v8M10 3h4a1 1 0 0 1 1 1v3H9V4a1 1 0 0 1 1-1ZM6 7h12v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7Z"/>
+										</svg>
+									  </button>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+<!-- vue app close -->
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+<script>
+const app = Vue.createApp({
+  data() {
+    return {
+      url: '',
+      shortenedURL: null,
+      error: null,
+      copied: false,
+      shortenedURLs: []
+    };
+  },
+  mounted() {
+    // Add a class to make the UI visible once the app is mounted
+    document.body.classList.add('app-visible');
+    // Load history from localStorage
+    const savedURLs = JSON.parse(localStorage.getItem('shortenedURLs'));
+    if (savedURLs) {
+      this.shortenedURLs = savedURLs;
+    }
+  },
+  methods: {
+  
+   hideError() {
+        this.error = null; // Hide the error
+    },
+// shortenedURLs Function  
+    async shortenURL() {
+      this.error = null;
+      const options = {
+        method: 'POST',
+        url: 'https://url-link-shortener-and-qr-code-generator.p.rapidapi.com/ext/api/url/add',
+        headers: {
+            'x-rapidapi-key': 'my-api-key',
+            'x-rapidapi-host': 'url-link-shortener-and-qr-code-generator.p.rapidapi.com',
+            'Content-Type': 'application/json',
+            'X-RapidAPI-Secret': 'my-api-key'
+        },
+        data: {
+          url: this.url
+        }
+      };
+
+      try {
+        const response = await axios.request(options);
+        if (response.data && response.data.shorturl) {
+          this.shortenedURL = response.data.shorturl;
+          this.addToHistory(response.data.shorturl);
+		  this.url='';
+        } else {
+          this.error = 'Unexpected response structure.';
+		  this.url='';
+        }
+      } catch (error) {
+        console.error(error);
+        this.error = 'Failed to shorten the URL. Please try again.';
+		this.url='';
+      }
+    },
+// addToHistory Function	
+    addToHistory(shortURL) {
+      this.shortenedURLs.push(shortURL);
+      localStorage.setItem('shortenedURLs', JSON.stringify(this.shortenedURLs));
+    },
+
+// Delete Function	
+	Url_delete(shortURL) {
+	  const index = this.shortenedURLs.indexOf(shortURL);
+	  if (index !== -1) {
+		this.shortenedURLs.splice(index, 1);
+		localStorage.setItem('shortenedURLs', JSON.stringify(this.shortenedURLs));
+	  }
+	},
+
+// Copy Function
+    copyToClipboard() {
+      navigator.clipboard.writeText(this.shortenedURL).then(() => {
+        this.copied = true;
+        setTimeout(() => {
+          this.copied = false;
+        }, 2000);
+      }).catch((err) => {
+        console.error('Failed to copy: ', err);
+      });
+    }
+  }
+});
+
+  app.mount('#app');
+</script>
+
+</body>
+</html>
